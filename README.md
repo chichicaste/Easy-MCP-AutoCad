@@ -2,6 +2,7 @@
 # AutoCAD MCP 服务器
 
 基于 **Model Context Protocol (MCP)** 的 AutoCAD 集成服务器，允许通过 **Claude** 等大型语言模型 (LLM) 与 AutoCAD 进行自然语言交互。
+本案例仅作参考和学习，部分CAD功能尚未实现，但实现与autocad端到端之间的通信，但具体的工具函数尚未实现
 
 ## 示例
 [![AutoCAD MCP 演示视频](https://img.youtube.com/vi/-I6CTc3Xaek/0.jpg)](https://www.youtube.com/watch?v=-I6CTc3Xaek)
