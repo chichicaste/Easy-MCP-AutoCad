@@ -3,6 +3,9 @@
 
 基于 **Model Context Protocol (MCP)** 的 AutoCAD 集成服务器，允许通过 **Claude** 等大型语言模型 (LLM) 与 AutoCAD 进行自然语言交互。
 
+## 示例
+![Demo Video](video.mp4)
+
 ## 功能特点
 
 - **自然语言交互**：通过自然语言控制 AutoCAD 创建和修改图纸  
