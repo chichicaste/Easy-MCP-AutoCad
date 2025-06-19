@@ -7,8 +7,8 @@
 ## 示例
 [![AutoCAD MCP 演示视频](https://img.youtube.com/vi/-I6CTc3Xaek/0.jpg)](https://www.youtube.com/watch?v=-I6CTc3Xaek)
 
-
-
+我们的项目已经被MseeP.ai引用：
+https://mseep.ai/app/zh19980811-easy-mcp-autocad。
 
 
 ## 功能特点
