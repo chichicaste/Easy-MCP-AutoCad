@@ -77,8 +77,6 @@ python server.py
 编辑 **Claude Desktop** 配置文件（路径如下）：  
 
 - Windows: %APPDATA%\Claude\claude_desktop_config.json  
-- macOS: ~/Library/Application Support/Claude/claude_desktop_config.json  
-
 示例配置：
 
 ```json
