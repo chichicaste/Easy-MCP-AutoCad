@@ -47,51 +47,63 @@ cd autocad-mcp-server
 
 | `export_to_database` | 将 CAD 元素信息存入 SQLite |
 
-2. 创建虚拟环境 / Create virtual environment
-Windows:
+## 2. 创建虚拟环境 / Create virtual environment
 
-bash
-复制
-编辑
+**Windows:**
+
+```bash
 python -m venv .venv
 .venv\Scripts\activate
-macOS / Linux:
+```
 
-bash
-复制
-编辑
+**macOS / Linux:**
+
+```bash
 python -m venv .venv
 source .venv/bin/activate
-3. 安装依赖 / Install dependencies
-bash
-复制
-编辑
+```
+
+---
+
+## 3. 安装依赖 / Install dependencies
+
+```bash
 pip install -r requirements.txt
-4. （可选）构建可执行文件 / (Optional) Build as executable
-bash
-复制
-编辑
+```
+
+---
+
+## 4. （可选）构建可执行文件 / (Optional) Build as executable
+
+```bash
 pyinstaller --onefile server.py
-🚀 使用方法 / How to Use
-独立运行服务器 / Run server independently
-bash
-复制
-编辑
+```
+
+---
+
+## 🚀 使用方法 / How to Use
+
+### 独立运行服务器 / Run server independently
+
+```bash
 python server.py
-集成 Claude Desktop / Integrate with Claude Desktop
+```
+
+---
+
+### 集成 Claude Desktop / Integrate with Claude Desktop
+
 编辑配置文件：
 
-Windows 路径 / Config path on Windows:
+**Windows 路径 / Config path on Windows:**
 
-shell
-复制
-编辑
+```shell
 %APPDATA%\Claude\claude_desktop_config.json
-示例配置 / Example config:
+```
 
-json
-复制
-编辑
+**示例配置 / Example config:**
+
+```json
 {
   "mcpServers": {
     "autocad-mcp-server": {
@@ -100,18 +112,31 @@ json
     }
   }
 }
-🧰 工具 API / Available API Tools
-功能 / Function	描述 / Description
-create_new_drawing	创建新的图纸 / Create a new AutoCAD drawing
-draw_line	画直线 / Draw a line
-draw_circle	画圆 / Draw a circle
-set_layer	设置当前图层 / Set current drawing layer
-highlight_text	高亮显示匹配文本 / Highlight matching text
-scan_elements	扫描并解析图纸元素 / Scan and parse drawing elements
-export_to_database	导出 CAD 元素到数据库 / Export CAD data to SQLite
+```
 
-🙋‍♂️ 维护状态 / Maintenance Notice
-⚠️ 当前我正忙于其他项目，维护精力有限。欢迎 Fork 项目或提交 PR，一起完善 AutoCAD 智能交互生态！
+---
+
+## 🧰 工具 API / Available API Tools
+
+| 功能 / Function         | 描述 / Description                       |
+|------------------------|------------------------------------------|
+| `create_new_drawing`   | 创建新的图纸 / Create a new drawing      |
+| `draw_line`            | 画直线 / Draw a line                     |
+| `draw_circle`          | 画圆 / Draw a circle                     |
+| `set_layer`            | 设置当前图层 / Set current drawing layer |
+| `highlight_text`       | 高亮显示匹配文本 / Highlight matching text |
+| `scan_elements`        | 扫描并解析图纸元素 / Scan and parse drawing elements |
+| `export_to_database`   | 导出 CAD 元素到数据库 / Export CAD data to SQLite |
+
+---
+
+## 🙋‍♂️ 维护状态 / Maintenance Notice
+
+⚠️ 当前我正忙于其他项目，维护精力有限。欢迎 Fork 项目或提交 PR，一起完善 AutoCAD 智能交互生态！  
 ⚠️ I'm currently busy and not able to actively maintain this repo. PRs and collaborators are welcome!
 
-📬 联系我 / Contact: zh19980811@outlook.com (或在 GitHub 提交 Issue)
+📬 联系我 / Contact: 1062723732@qq.com 
+
+---
+
+Made with ❤️ for open-source learning.
