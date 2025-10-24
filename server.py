@@ -6,15 +6,15 @@ import json
 import random
 import re
 
-# 创建服务器
+# Create server
 mcp = FastMCP("AutoCAD-DB-Server")
 
-# 初始化 SQLite 数据库
+# Initialize SQLite database
 def init_db():
     try:
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
-        # 创建实体表
+        # Create table for entities
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS cad_elements (
             id INTEGER PRIMARY KEY,
@@ -25,7 +25,7 @@ def init_db():
             properties TEXT
         )
         ''')
-        # 创建文字内容统计表
+        # Create table for text pattern statistics
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS text_patterns (
             id INTEGER PRIMARY KEY,
@@ -38,70 +38,70 @@ def init_db():
         conn.close()
         return True
     except Exception as e:
-        print(f"数据库初始化失败: {str(e)}")
+        print(f"Database initialization failed: {str(e)}")
         return False
 
-# 确保数据库初始化
+# Ensure database is initialized
 init_db()
 
-# ======= AutoCAD 基础工具 =======
+# ======= AutoCAD Basic Tools =======
 
 @mcp.tool()
 def create_new_drawing(ctx: Context, template: Optional[str] = None) -> str:
-    """创建新的 AutoCAD 图纸"""
+    """Create a new AutoCAD drawing"""
     try:
-        # 尝试连接到 AutoCAD
+        # Attempt to connect to AutoCAD
         acad = win32com.client.Dispatch("AutoCAD.Application")
         acad.Visible = True
-        
-        # 创建新文档
+
+        # Create a new document
         if template:
             doc = acad.Documents.Add(template)
         else:
             doc = acad.Documents.Add()
-            
-        return f"成功创建新图纸"
+
+        return "Successfully created new drawing"
     except Exception as e:
-        return f"创建图纸失败: {str(e)}"
+        return f"Failed to create drawing: {str(e)}"
 
 @mcp.tool()
 def draw_line(ctx: Context, start_x: float, start_y: float, end_x: float, end_y: float, layer: Optional[str] = None) -> str:
-    """在AutoCAD中绘制直线
-    
+    """Draw a straight line in AutoCAD.
+
     Args:
-        start_x: 起点X坐标
-        start_y: 起点Y坐标
-        end_x: 终点X坐标
-        end_y: 终点Y坐标
-        layer: 可选的图层名称
+        start_x: X coordinate of the start point
+        start_y: Y coordinate of the start point
+        end_x: X coordinate of the end point
+        end_y: Y coordinate of the end point
+        layer: Optional layer name
     """
     try:
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
-        
+            return "No open document. Please create or open a drawing first."
+
         doc = acad.ActiveDocument
         model_space = doc.ModelSpace
-        
-        # 如果指定了图层，先切换或创建图层
+
+        # If a layer is specified, switch to it or create it
         if layer:
             try:
-                # 尝试获取图层
+                # Try to get the layer
                 doc.Layers.Item(layer)
             except:
-                # 图层不存在，创建新图层
+                # Layer does not exist — create it
                 doc.Layers.Add(layer)
-            
-            # 设置当前图层
+
+            # Set the current layer
             doc.ActiveLayer = doc.Layers.Item(layer)
-        
-        # 创建直线
+
+        # Create the line
         line = model_space.AddLine(
             win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [start_x, start_y, 0]),
             win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [end_x, end_y, 0])
         )
-        
-        # 将线条信息存入数据库
+
+        # Store the line information in the database
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
         props = {
@@ -114,46 +114,46 @@ def draw_line(ctx: Context, start_x: float, start_y: float, end_x: float, end_y:
         )
         conn.commit()
         conn.close()
-        
-        return f"已创建直线，Handle: {line.Handle}, 图层: {doc.ActiveLayer.Name}"
+
+        return f"Line created, Handle: {line.Handle}, Layer: {doc.ActiveLayer.Name}"
     except Exception as e:
-        return f"创建直线失败: {str(e)}"
+        return f"Failed to create line: {str(e)}"
 
 @mcp.tool()
 def draw_circle(ctx: Context, center_x: float, center_y: float, radius: float, layer: Optional[str] = None) -> str:
-    """在AutoCAD中绘制圆
-    
+    """Draw a circle in AutoCAD.
+
     Args:
-        center_x: 圆心X坐标
-        center_y: 圆心Y坐标  
-        radius: 半径
-        layer: 可选的图层名称
+        center_x: X coordinate of the center point
+        center_y: Y coordinate of the center point
+        radius: Radius of the circle
+        layer: Optional layer name
     """
     try:
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
-        
+            return "No open document. Please create or open a drawing first."
+
         doc = acad.ActiveDocument
         model_space = doc.ModelSpace
-        
-        # 如果指定了图层，先切换或创建图层
+
+        # If a layer is specified, switch to it or create it
         if layer:
             try:
-                # 尝试获取图层
+                # Try to get the layer
                 doc.Layers.Item(layer)
             except:
-                # 图层不存在，创建新图层
+                # Layer does not exist — create it
                 doc.Layers.Add(layer)
-            
-            # 设置当前图层
+
+            # Set the current layer
             doc.ActiveLayer = doc.Layers.Item(layer)
-        
-        # 创建圆
+
+        # Create the circle
         center_point = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [center_x, center_y, 0])
         circle = model_space.AddCircle(center_point, radius)
-        
-        # 将圆信息存入数据库
+
+        # Store the circle information in the database
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
         props = {
@@ -166,48 +166,48 @@ def draw_circle(ctx: Context, center_x: float, center_y: float, radius: float, l
         )
         conn.commit()
         conn.close()
-        
-        return f"已创建圆，Handle: {circle.Handle}, 半径: {radius}, 图层: {doc.ActiveLayer.Name}"
-    except Exception as e:
-        return f"创建圆失败: {str(e)}"
 
-# ======= 实体扫描和数据库交互 =======
+        return f"Circle created, Handle: {circle.Handle}, Radius: {radius}, Layer: {doc.ActiveLayer.Name}"
+    except Exception as e:
+        return f"Failed to create circle: {str(e)}"
+
+# ======= Entity scanning and database interaction =======
 
 @mcp.tool()
 def scan_all_entities(ctx: Context) -> str:
-    """扫描当前图纸中的所有实体并保存到数据库"""
+    """Scan all entities in the current drawing and save them to the database"""
     try:
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
-        
+            return "No open document. Please create or open a drawing first."
+
         doc = acad.ActiveDocument
         model_space = doc.ModelSpace
-        
-        # 连接数据库
+
+        # Connect to the database
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
-        
-        # 清空现有记录（可选）
+
+        # Clear existing records (optional)
         cursor.execute("DELETE FROM cad_elements")
-        
-        # 统计信息
+
+        # Statistics
         count = 0
         entity_types = {}
-        
-        # 遍历所有实体
+
+        # Iterate over all entities
         for i in range(model_space.Count):
             try:
                 entity = model_space.Item(i)
                 entity_type = entity.ObjectName
-                
-                # 统计类型数量
+
+                # Count types
                 if entity_type in entity_types:
                     entity_types[entity_type] += 1
                 else:
                     entity_types[entity_type] = 1
-                
-                # 获取基本属性
+
+                # Extract basic properties
                 properties = {}
                 if entity_type == "AcDbLine":
                     properties = {
@@ -225,102 +225,102 @@ def scan_all_entities(ctx: Context) -> str:
                         "position": [entity.InsertionPoint[0], entity.InsertionPoint[1], entity.InsertionPoint[2]] if hasattr(entity, "InsertionPoint") else None,
                         "height": entity.Height if hasattr(entity, "Height") else None
                     }
-                
-                # 将实体信息存入数据库
+
+                # Store entity information in the database
                 cursor.execute(
                     "INSERT OR REPLACE INTO cad_elements (handle, name, type, layer, properties) VALUES (?, ?, ?, ?, ?)",
                     (entity.Handle, entity.ObjectName.replace("AcDb", ""), entity.ObjectName, entity.Layer, json.dumps(properties))
                 )
-                
+
                 count += 1
             except Exception as e:
-                print(f"处理实体 {i} 时出错: {str(e)}")
-        
+                print(f"Error processing entity {i}: {str(e)}")
+
         conn.commit()
         conn.close()
-        
-        # 格式化类型统计
+
+        # Format type summary
         type_summary = "\n".join([f"{t}: {c}" for t, c in entity_types.items()])
-        
-        return f"已扫描并保存 {count} 个实体到数据库。\n\n实体类型统计:\n{type_summary}"
+
+        return f"Scanned and saved {count} entities to the database.\n\nEntity type summary:\n{type_summary}"
     except Exception as e:
-        return f"扫描实体失败: {str(e)}"
+        return f"Failed to scan entities: {str(e)}"
 
 @mcp.tool()
 def highlight_entity(ctx: Context, handle: str, color: int = 1) -> str:
-    """通过Handle在AutoCAD中高亮显示指定实体
+    """Highlight a specified entity in AutoCAD by its Handle.
     
     Args:
-        handle: 实体的Handle值
-        color: 高亮颜色码（1=红色, 2=黄色, 3=绿色, 4=青色, 5=蓝色, 6=洋红色）
+        handle: The entity Handle value
+        color: Highlight color code (1=red, 2=yellow, 3=green, 4=cyan, 5=blue, 6=magenta)
     """
     try:
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
-        
+            return "No open document. Please create or open a drawing first."
+
         doc = acad.ActiveDocument
-        
-        # 保存当前选择集
+
+        # Create a temporary selection set
         doc.SelectionSets.Add("TempSS")
         selection = doc.SelectionSets.Item("TempSS")
-        
-        # 根据Handle选择实体
+
+        # Select entity by Handle
         filter_type = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_I2, [0])
         filter_data = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_VARIANT, ["HANDLE", handle])
         selection.Select(2, 0, 0, filter_type, filter_data)
-        
+
         if selection.Count == 0:
             selection.Delete()
-            return f"未找到Handle为 {handle} 的实体"
-        
-        # 修改实体颜色
+            return f"No entity found with Handle {handle}"
+
+        # Change entity color
         entity = selection.Item(0)
         original_color = entity.Color
         entity.Color = color
-        
-        selection.Delete()
-        
-        return f"已高亮实体 {handle}，颜色从 {original_color} 改为 {color}"
-    except Exception as e:
-        return f"高亮实体失败: {str(e)}"
 
-# ======= 文本分析工具 =======
+        selection.Delete()
+
+        return f"Highlighted entity {handle}, color changed from {original_color} to {color}"
+    except Exception as e:
+        return f"Failed to highlight entity: {str(e)}"
+
+# ======= Text analysis tools =======
 
 @mcp.tool()
 def count_text_patterns(ctx: Context, pattern: str = "PMC-3M") -> str:
-    """统计图纸中文本实体中特定模式的出现次数
-    
+    """Count occurrences of a specific text pattern among text entities in the drawing.
+
     Args:
-        pattern: 要搜索的文本模式，默认为"PMC-3M"
+        pattern: The text pattern to search for (default "PMC-3M")
     """
     try:
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
-        
+            return "No open document. Please create or open a drawing first."
+
         doc = acad.ActiveDocument
         model_space = doc.ModelSpace
         drawing_name = doc.Name
-        
-        # 连接数据库
+
+        # Connect to the database
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
-        
-        # 计数器
+
+        # Counter
         count = 0
         matching_entities = []
-        
-        # 遍历所有实体
+
+        # Iterate over all entities
         for i in range(model_space.Count):
             try:
                 entity = model_space.Item(i)
-                
-                # 检查是否为文本实体
+
+                # Check if it's a text entity
                 if hasattr(entity, "TextString"):
                     text = entity.TextString
-                    
-                    # 搜索模式
+
+                    # Search for the pattern
                     if pattern in text:
                         count += 1
                         matching_entities.append({
@@ -330,122 +330,122 @@ def count_text_patterns(ctx: Context, pattern: str = "PMC-3M") -> str:
                             "position": [entity.InsertionPoint[0], entity.InsertionPoint[1]] if hasattr(entity, "InsertionPoint") else None
                         })
             except Exception as e:
-                print(f"处理文本实体 {i} 时出错: {str(e)}")
-        
-        # 保存统计结果到数据库
+                print(f"Error processing text entity {i}: {str(e)}")
+
+        # Save statistics to the database
         cursor.execute(
             "INSERT OR REPLACE INTO text_patterns (pattern, count, drawing) VALUES (?, ?, ?)",
             (pattern, count, drawing_name)
         )
         conn.commit()
         conn.close()
-        
-        result = f"在图纸 '{drawing_name}' 中找到 {count} 处匹配模式 '{pattern}' 的文本。"
-        
-        # 如果有匹配项，显示详细信息
+
+        result = f"Found {count} occurrences of pattern '{pattern}' in drawing '{drawing_name}'."
+
+        # If matches exist, show details
         if count > 0:
-            details = "\n\n匹配详情："
-            for i, match in enumerate(matching_entities[:10]):  # 限制显示前10个
-                details += f"\n{i+1}. 文本: '{match['text']}', 图层: {match['layer']}, Handle: {match['handle']}"
-            
+            details = "\n\nMatch details:"
+            for i, match in enumerate(matching_entities[:10]):  # limit to first 10
+                details += f"\n{i+1}. Text: '{match['text']}', Layer: {match['layer']}, Handle: {match['handle']}"
+
             if len(matching_entities) > 10:
-                details += f"\n... 以及其他 {len(matching_entities) - 10} 个匹配项"
-                
+                details += f"\n... and {len(matching_entities) - 10} more matches"
+
             result += details
-        
+
         return result
     except Exception as e:
-        return f"统计文本模式失败: {str(e)}"
+        return f"Failed to count text patterns: {str(e)}"
 
 @mcp.tool()
 def highlight_text_matches(ctx: Context, pattern: str = "PMC-3M", color: int = 1) -> str:
-    """高亮显示包含指定文本模式的所有文本实体
-    
+    """Highlight all text entities that contain the specified text pattern.
+
     Args:
-        pattern: 要搜索的文本模式，默认为"PMC-3M"
-        color: 高亮颜色码（1=红色, 2=黄色, 3=绿色, 4=青色, 5=蓝色, 6=洋红色）
+        pattern: The text pattern to search for (default "PMC-3M")
+        color: Highlight color code (1=red, 2=yellow, 3=green, 4=cyan, 5=blue, 6=magenta)
     """
     try:
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
-        
+            return "No open document. Please create or open a drawing first."
+
         doc = acad.ActiveDocument
         model_space = doc.ModelSpace
-        
-        # 创建选择集
+
+        # Create selection set
         try:
-            # 尝试删除可能存在的选择集
+            # Attempt to remove any existing selection set
             doc.SelectionSets.Item("TextMatches").Delete()
         except:
             pass
-        
+
         selection = doc.SelectionSets.Add("TextMatches")
-        
-        # 计数器
+
+        # Counter
         count = 0
-        
-        # 遍历所有实体
+
+        # Iterate over all entities
         for i in range(model_space.Count):
             try:
                 entity = model_space.Item(i)
-                
-                # 检查是否为文本实体
+
+                # Check if it's a text entity
                 if hasattr(entity, "TextString"):
                     text = entity.TextString
-                    
-                    # 搜索模式
+
+                    # Search for the pattern
                     if pattern in text:
-                        # 保存原始颜色
+                        # Save original color
                         original_color = entity.Color
-                        
-                        # 修改颜色
+
+                        # Change color
                         entity.Color = color
-                        
-                        # 添加到选择集
+
+                        # Add to selection set
                         selection.AddItems([entity])
-                        
+
                         count += 1
             except Exception as e:
-                print(f"处理文本实体 {i} 时出错: {str(e)}")
-        
+                print(f"Error processing text entity {i}: {str(e)}")
+
         if count > 0:
-            # 缩放到选择集
+            # Zoom to selection set
             doc.ActiveView.ZoomAll()
-            return f"已高亮显示 {count} 个包含 '{pattern}' 的文本实体"
+            return f"Highlighted {count} text entities containing '{pattern}'"
         else:
             selection.Delete()
-            return f"未找到包含 '{pattern}' 的文本实体"
+            return f"No text entities containing '{pattern}' found"
     except Exception as e:
-        return f"高亮文本匹配失败: {str(e)}"
+        return f"Failed to highlight text matches: {str(e)}"
 
-# ======= 数据库查询工具 =======
+# ======= Database query tools =======
 
 @mcp.tool()
 def get_all_tables(ctx: Context) -> str:
-    """获取数据库中的所有表"""
+    """Get all tables in the database"""
     try:
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         tables = cursor.fetchall()
         conn.close()
-        
+
         table_list = [table[0] for table in tables]
         return json.dumps(table_list, indent=2)
     except Exception as e:
-        return f"获取表列表失败: {str(e)}"
+        return f"Failed to get table list: {str(e)}"
 
 @mcp.tool()
 def get_table_schema(ctx: Context, table_name: str) -> str:
-    """获取指定表的结构信息"""
+    """Get schema information for a specified table"""
     try:
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
         cursor.execute(f"PRAGMA table_info({table_name});")
         columns = cursor.fetchall()
         conn.close()
-        
+
         schema = []
         for col in columns:
             schema.append({
@@ -456,51 +456,51 @@ def get_table_schema(ctx: Context, table_name: str) -> str:
                 "default_value": col[4],
                 "pk": col[5]
             })
-        
+
         return json.dumps(schema, indent=2)
     except Exception as e:
-        return f"获取表结构失败: {str(e)}"
+        return f"Failed to get table schema: {str(e)}"
 
 @mcp.tool()
 def execute_query(ctx: Context, query: str) -> str:
-    """执行自定义数据库查询"""
+    """Execute a custom database query"""
     try:
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
         cursor.execute(query)
-        
-        # 如果是SELECT查询，获取结果
+
+        # If it's a SELECT query, fetch results
         if query.strip().upper().startswith("SELECT"):
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
-            
-            # 将结果转换为字典列表
+
+            # Convert results to a list of dictionaries
             result = []
             for row in rows:
                 result.append(dict(zip(columns, row)))
-                
+
             conn.commit()
             conn.close()
             return json.dumps(result, indent=2)
         else:
-            # 非SELECT查询，返回影响的行数
+            # Non-SELECT query — return affected row count
             conn.commit()
             affected = cursor.rowcount
             conn.close()
-            return f"执行成功，影响了 {affected} 行"
+            return f"Query executed successfully, affected {affected} rows"
     except Exception as e:
-        return f"执行查询失败: {str(e)}"
+        return f"Failed to execute query: {str(e)}"
 
 @mcp.tool()
 def query_and_highlight(ctx: Context, sql_query: str, highlight_color: int = 1) -> str:
-    """根据SQL查询结果高亮显示AutoCAD实体
+    """Highlight AutoCAD entities based on SQL query results.
     
     Args:
-        sql_query: 必须是返回handle列的SQL查询
-        highlight_color: 高亮颜色码（1-255）
+        sql_query: SQL query that must return a 'handle' column
+        highlight_color: Highlight color code (1-255)
     """
     try:
-        # 执行查询
+        # Execute query
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
         cursor.execute(sql_query)
@@ -508,12 +508,12 @@ def query_and_highlight(ctx: Context, sql_query: str, highlight_color: int = 1) 
         conn.close()
         
         if not rows:
-            return "查询未返回任何结果"
+            return "Query returned no results"
         
-        # 获取列名
+        # Get column names
         column_names = [description[0] for description in cursor.description]
         
-        # 查找handle列
+        # Find 'handle' column
         handle_index = -1
         for i, name in enumerate(column_names):
             if name.lower() == 'handle':
@@ -521,85 +521,85 @@ def query_and_highlight(ctx: Context, sql_query: str, highlight_color: int = 1) 
                 break
         
         if handle_index == -1:
-            return "查询结果中未找到handle列"
+            return "No 'handle' column found in query results"
         
-        # 提取所有handle
+        # Extract all handles
         handles = [row[handle_index] for row in rows]
         
-        # 高亮实体
+        # Highlight entities
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
+            return "No open document. Please create or open a drawing first."
         
         doc = acad.ActiveDocument
         
-        # 创建选择集
+        # Create selection set
         try:
-            # 尝试删除可能存在的选择集
+            # Attempt to remove any existing selection set
             doc.SelectionSets.Item("QueryResults").Delete()
         except:
             pass
         
         selection = doc.SelectionSets.Add("QueryResults")
         
-        # 高亮找到的实体
+        # Highlight found entities
         highlighted_count = 0
         for handle in handles:
             try:
-                # 根据Handle选择实体
+                # Select entity by Handle
                 filter_type = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_I2, [0])
                 filter_data = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_VARIANT, ["HANDLE", handle])
                 
-                # 创建临时选择集
+                # Create temporary selection set
                 temp_selection = doc.SelectionSets.Add(f"Temp_{random.randint(1000, 9999)}")
                 temp_selection.Select(2, 0, 0, filter_type, filter_data)
                 
                 if temp_selection.Count > 0:
-                    # 修改颜色
+                    # Change color
                     entity = temp_selection.Item(0)
                     entity.Color = highlight_color
                     
-                    # 添加到主选择集
+                    # Add to main selection set
                     selection.AddItems([entity])
                     highlighted_count += 1
                 
-                # 删除临时选择集
+                # Delete temporary selection set
                 temp_selection.Delete()
             except Exception as e:
-                print(f"处理实体 {handle} 时出错: {str(e)}")
+                print(f"Error processing entity {handle}: {str(e)}")
         
         if highlighted_count > 0:
-            # 缩放到选择集
+            # Zoom to selection set
             doc.ActiveView.ZoomAll()
-            return f"已高亮显示 {highlighted_count} 个实体（共 {len(handles)} 个结果）"
+            return f"Highlighted {highlighted_count} entities (out of {len(handles)} results)"
         else:
             selection.Delete()
-            return f"未能高亮任何实体"
+            return f"Failed to highlight any entities"
     except Exception as e:
-        return f"查询并高亮失败: {str(e)}"
-# 添加到现有代码中
+        return f"Failed to query and highlight: {str(e)}"
+# Added to existing code
 
 @mcp.tool()
 @mcp.tool()
 def draw_line(ctx: Context, start_x: float, start_y: float, end_x: float, end_y: float, layer: Optional[str] = None) -> str:
-    """在AutoCAD中绘制直线"""
+    """Draw a straight line in AutoCAD"""
     try:
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
-        
+            return "No open document. Please create or open a drawing first."
+
         doc = acad.ActiveDocument
         model_space = doc.ModelSpace
+
+        # Handle layer...
         
-        # 处理图层...
-        
-        # 创建直线
+        # Create the line
         line = model_space.AddLine(
             win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [start_x, start_y, 0]),
             win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [end_x, end_y, 0])
         )
-        
-        # 将线条信息存入数据库（不使用handle字段）
+
+        # Store line info in the database (without using handle field)
         conn = sqlite3.connect("autocad_data.db")
         cursor = conn.cursor()
         props = {
@@ -612,57 +612,57 @@ def draw_line(ctx: Context, start_x: float, start_y: float, end_x: float, end_y:
         )
         conn.commit()
         conn.close()
-        
-        return f"已创建直线，从 ({start_x}, {start_y}) 到 ({end_x}, {end_y})"
+
+        return f"Created line from ({start_x}, {start_y}) to ({end_x}, {end_y})"
     except Exception as e:
-        return f"创建直线失败: {str(e)}"
+        return f"Failed to create line: {str(e)}"
 
 @mcp.tool()
 def draw_device_connection(ctx: Context, start_device: str, end_device: str, start_x: Optional[float] = None, start_y: Optional[float] = None, end_x: Optional[float] = None, end_y: Optional[float] = None, layer: Optional[str] = None) -> str:
-    """绘制设备之间的连接线
-    
+    """Draw a connection line between devices.
+
     Args:
-        start_device: 起始设备标签，如"P14"
-        end_device: 结束设备标签，如"P02"
-        start_x: 可选的起始点X坐标（如果不提供则自动查找设备）
-        start_y: 可选的起始点Y坐标
-        end_x: 可选的结束点X坐标
-        end_y: 可选的结束点Y坐标
-        layer: 可选的图层名称
+        start_device: Label of the start device, e.g. "P14"
+        end_device: Label of the end device, e.g. "P02"
+        start_x: Optional start X coordinate (auto-locate if not provided)
+        start_y: Optional start Y coordinate
+        end_x: Optional end X coordinate
+        end_y: Optional end Y coordinate
+        layer: Optional layer name
     """
     try:
         acad = win32com.client.Dispatch("AutoCAD.Application")
         if acad.Documents.Count == 0:
-            return "无打开的文档，请先创建或打开一个图纸"
+            return "No open document. Please create or open a drawing first."
         
         doc = acad.ActiveDocument
         model_space = doc.ModelSpace
         
-        # 如果指定了图层，先切换或创建图层
+        # If a layer is specified, switch to it or create it
         if layer:
             try:
-                # 尝试获取图层
+                # Try to get the layer
                 doc.Layers.Item(layer)
             except:
-                # 图层不存在，创建新图层
+                # Layer does not exist — create it
                 doc.Layers.Add(layer)
             
-            # 设置当前图层
+            # Set the current layer
             doc.ActiveLayer = doc.Layers.Item(layer)
 
-        # 如果没有提供坐标，尝试从数据库中查找设备
+        # If coordinates are not provided, try to find devices in the database
         if start_x is None or start_y is None or end_x is None or end_y is None:
             conn = sqlite3.connect("autocad_data.db")
             cursor = conn.cursor()
             
-            # 查找起始设备
+            # Find start device
             cursor.execute(
                 "SELECT properties FROM cad_elements WHERE type = 'CustomDevice' AND json_extract(properties, '$.label') = ?",
                 (start_device,)
             )
             start_result = cursor.fetchone()
             
-            # 查找结束设备
+            # Find end device
             cursor.execute(
                 "SELECT properties FROM cad_elements WHERE type = 'CustomDevice' AND json_extract(properties, '$.label') = ?",
                 (end_device,)
@@ -672,44 +672,44 @@ def draw_device_connection(ctx: Context, start_device: str, end_device: str, sta
             conn.close()
             
             if not start_result:
-                return f"未找到标签为 {start_device} 的设备"
+                return f"No device found with label {start_device}"
                 
             if not end_result:
-                return f"未找到标签为 {end_device} 的设备"
+                return f"No device found with label {end_device}"
             
-            # 解析设备位置和尺寸
+            # Parse device position and size
             start_props = json.loads(start_result[0])
             end_props = json.loads(end_result[0])
             
             start_pos = start_props["position"]
             end_pos = end_props["position"]
             
-            # 设置连接线起点和终点（设备的左侧连接点）
-            start_x = start_pos[0] - 5  # 设备左侧
+            # Set connection line start and end points (device's left-side connection point)
+            start_x = start_pos[0] - 5  # left side of device
             start_y = start_pos[1]
             end_x = end_pos[0] - 5
             end_y = end_pos[1]
             
-        # 创建连接线（水平线段 + 垂直线段 + 水平线段）
-        # 首先创建起始水平线段
+        # Create connection line (horizontal + vertical + horizontal)
+        # First create starting horizontal segment
         line1_start = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [start_x, start_y, 0])
         line1_end = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [start_x - 10, start_y, 0])
         line1 = model_space.AddLine(line1_start, line1_end)
         
-        # 创建垂直连接线
+        # Create vertical connection
         line2_start = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [start_x - 10, start_y, 0])
         line2_end = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [start_x - 10, end_y, 0])
         line2 = model_space.AddLine(line2_start, line2_end)
         
-        # 创建结束水平线段
+        # Create ending horizontal segment
         line3_start = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [start_x - 10, end_y, 0])
         line3_end = win32com.client.VARIANT(win32com.client.pythoncom.VT_ARRAY | win32com.client.pythoncom.VT_R8, [end_x, end_y, 0])
         line3 = model_space.AddLine(line3_start, line3_end)
         
-        return f"已创建从 {start_device} 到 {end_device} 的连接线"
+        return f"Created connection line from {start_device} to {end_device}"
     except Exception as e:
-        return f"创建连接线失败: {str(e)}"
+        return f"Failed to create connection line: {str(e)}"
     
-# 启动服务器
+# Start server
 if __name__ == "__main__":
     mcp.run()
