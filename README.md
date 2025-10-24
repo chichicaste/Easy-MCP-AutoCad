@@ -38,6 +38,9 @@ Demo video:
 ```bash
 git clone https://github.com/yourusername/autocad-mcp-server.git
 cd autocad-mcp-server
+
+| `export_to_database` | Storing CAD element information in SQLite |
+
 ```
 
 2. Create and activate a virtual environment
